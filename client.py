@@ -8,7 +8,7 @@ HOST = "localhost"  # will send to localhost (127.0.0.1)
 PORT = 19999  # will send to port 19999
 
 # data csv filename
-filename = "samplecsv"
+filename = "sample.csv"
 if argv.__len__() >= 2:
     filename = argv[1]
 
