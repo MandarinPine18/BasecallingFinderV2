@@ -2,6 +2,7 @@
 
 import socket
 import csv
+import struct
 from sys import argv
 
 HOST = "localhost"  # will send to localhost (127.0.0.1)
@@ -14,15 +15,15 @@ if argv.__len__() >= 2:
 
 
 # loads csv file when given a filename (in folder) or path (anywhere in machine)
-def load_csv(path: str) -> [float]:
+def loadCSV(path: str):
     try:
         with open(path, mode="r") as file:
-            reader = csv.reader(file, delimiter=',')        # loading file with csv library
+            reader = csv.reader(file, delimiter=',')            # loading file with csv library
 
-            data = []                                       # this will be the uniform list of floats to be returned
+            data = []                                           # this will be the uniform list of floats to be returned
 
-            mass_column = reader.__next__().index("Mass")   # skipping the first row and using it to find the Mass row
-            for row in reader:                              # adding any non-empty entry in the "Mass" column to the data list (in float form)
+            mass_column = reader.__next__().index("Mass")       # skipping the first row and using it to find the Mass row
+            for row in reader:                                  # adding any non-empty entry in the "Mass" column to the data list (in float form)
                 if row[mass_column] != "":
                     data.append(float(row[mass_column]))
         return data
@@ -31,13 +32,26 @@ def load_csv(path: str) -> [float]:
         return []
 
 
+# these two functions encode and decode data to be sent over the socket
+def packData(data: [float]):
+    return struct.pack(f"!{data.__len__()}d", *data)
+
+
+def unpackResults(results: bytes):
+    final = []
+    for i in range(int(results.__len__()/17)):
+        final.append(struct.unpack("!dds", results[i*17: i*17+17]))
+    return final
+
+
 # loading data before establishing connection so, if there is a client-side file error, the server is not bothered
-data = load_csv(filename)
+data = packData(loadCSV(filename))
 
 try:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.connect((HOST, PORT))
-        sock.sendall(bytes(repr(data), 'utf-8'))  # encoding, sending float list
-        print(sock.recv(2048).decode('utf-8'))  # receiving, decoding, outputting list of basecallings
+        sock.sendall(data)                                      # encoding, sending float list
+        for row in unpackResults(sock.recv(2048)):              # receiving, decoding, outputting list of basecallings
+            print(row)
 except ConnectionError:
     print("Connection lost or not established, please try again")

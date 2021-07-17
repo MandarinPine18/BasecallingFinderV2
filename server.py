@@ -1,6 +1,8 @@
 # server
 
 import socket
+import struct
+from threading import Thread
 
 HOST = "localhost"  # will listen on localhost (127.0.0.1)
 PORT = 19999        # will listen on port 9999
@@ -11,6 +13,12 @@ bases = {           # given number differences for RNA bases
     'G': 345.0474,
     'U': 306.0253,
 }
+
+def connectionHandler(connection):
+    message = connection.recv(9000)
+    data = unpackData(message)  # processing the received bytes to a float list
+    results = processData(data)  # getting list of basecallings
+    connection.sendall(packCallings(results))  # encoding, sending the basecallings to the client
 
 
 # looks for basecallings, packs any that are found in a list of tuples
@@ -23,7 +31,6 @@ def processData(data):
             base = findBase(floatv, floatu)
             if base is not None:
                 results.append((floatv, floatu, base))
-    print(results.__len__())
     return results
 
 
@@ -36,13 +43,24 @@ def findBase(begin, end):
     return None
 
 
+# these two functions encode and decode data to be sent over the socket
+def unpackData(packedData: bytes):
+    unpacked = struct.unpack(f"!{int(packedData.__len__()/8)}d", packedData)
+    return unpacked
+
+
+def packCallings(unpackedCallings: [tuple]):
+    packed = b""
+    for calling in unpackedCallings:
+        packed += struct.pack(f"!dds", calling[0], calling[1], bytes(calling[2], "utf-8"))
+    return packed
+
+
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
     sock.bind((HOST, PORT))
-    sock.listen()       # listening on the specified host and port
+    sock.listen()                                   # listening on the specified host and port
     print(f"listening on {HOST}:{PORT}")
     while True:
-        with sock.accept()[0] as connection:        # runs every time a client establishes a connection
-            message = connection.recv(2048).decode("utf-8")
-            data = [float(i.strip()) for i in message.strip('[]').split(',')]       # processing the received bytes to a float list
-            results = processData(data)                                             # getting list of basecallings
-            connection.sendall(bytes(repr(results), 'utf-8'))                       # encoding, sending the basecallings to the client
+        conn = sock.accept()[0]
+        if conn is not None:
+            Thread(target=connectionHandler, args=(conn,)).start()     # runs every time a client establishes a connection
