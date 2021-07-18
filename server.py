@@ -26,7 +26,7 @@ def connectionHandler(connection, address):
 
 
 # looks for basecallings, packs any that are found in a list of tuples
-def processData(data):
+def processData(data: [float]):
     results = []
     for i, _ in enumerate(data):
         for j in range(i+1, data.__len__()):
