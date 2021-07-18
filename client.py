@@ -52,8 +52,8 @@ data = packData(loadCSV(filename))
 try:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.connect((HOST, PORT))
-        sock.sendall(data)                                      # encoding, sending float list
-        for row in unpackResults(sock.recv(2048)):              # receiving, decoding, outputting list of basecallings
+        sock.sendall(data)                                      # sending float list
+        for row in unpackResults(sock.recv(17000)):             # receiving, decoding, outputting list of basecallings
             print(row)
 except ConnectionError:
     print("Connection lost or not established, please try again")
