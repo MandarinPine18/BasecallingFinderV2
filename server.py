@@ -15,7 +15,7 @@ bases = {           # given number differences for RNA bases
 }
 
 
-def connectionHandler(connection, address):
+def connectionHandler(connection: socket.socket, address: tuple):
     print(f"Connection established with {address[0]}:{address[1]}")
     message = connection.recv(8192)
     data = unpackData(message)                                  # processing the received bytes to a float list
@@ -39,7 +39,7 @@ def processData(data: [float]):
 
 
 # checks to see if there are any matches with known differences for RNA bases
-def findBase(begin, end):
+def findBase(begin: float, end: float):
     difference = abs(end - begin)
     for base in bases:
         if abs(bases[base] - difference) <= 1E-6 * bases[base]:
