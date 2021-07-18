@@ -42,7 +42,7 @@ def processData(data):
 def findBase(begin, end):
     difference = abs(end - begin)
     for base in bases:
-        if abs(bases[base] - difference) <= 1E-6 * end:
+        if abs(bases[base] - difference) <= 1E-6 * bases[base]:
             return base
     return None
 
