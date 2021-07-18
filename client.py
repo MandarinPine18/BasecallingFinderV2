@@ -41,7 +41,8 @@ def packData(data: [float]):
 def unpackResults(results: bytes):
     final = []
     for i in range(int(results.__len__()/17)):
-        final.append(struct.unpack("!dds", results[i*17: i*17+17]))
+        result = struct.unpack("!dds", results[i*17: i*17+17])
+        final.append((result[0], result[1], bytes.decode(result[2], "utf-8")))
     return final
 
 
