@@ -32,11 +32,12 @@ def loadCSV(path: str):
         return []
 
 
-# these two functions encode and decode data to be sent over the socket
+# encoding float list to bytes
 def packData(data: [float]):
     return struct.pack(f"!{data.__len__()}d", *data)
 
 
+# decoding bytes to list of tuples with (float, float, str)
 def unpackResults(results: bytes):
     final = []
     for i in range(int(results.__len__()/17)):

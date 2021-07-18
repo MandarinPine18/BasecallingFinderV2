@@ -14,11 +14,15 @@ bases = {           # given number differences for RNA bases
     'U': 306.0253,
 }
 
-def connectionHandler(connection):
-    message = connection.recv(9000)
-    data = unpackData(message)  # processing the received bytes to a float list
-    results = processData(data)  # getting list of basecallings
-    connection.sendall(packCallings(results))  # encoding, sending the basecallings to the client
+
+def connectionHandler(connection, address):
+    print(f"Connection established with {address[0]}:{address[1]}")
+    message = connection.recv(8192)
+    data = unpackData(message)                                  # processing the received bytes to a float list
+    results = processData(data)                                 # getting list of basecallings
+    connection.sendall(packCallings(results))                   # encoding, sending the basecallings to the client
+    connection.close()
+    print(f"Connection closed with {address[0]}:{address[1]}")
 
 
 # looks for basecallings, packs any that are found in a list of tuples
@@ -43,12 +47,13 @@ def findBase(begin, end):
     return None
 
 
-# these two functions encode and decode data to be sent over the socket
+# decoding bytes to list of floats
 def unpackData(packedData: bytes):
     unpacked = struct.unpack(f"!{int(packedData.__len__()/8)}d", packedData)
     return unpacked
 
 
+# encoding list of tuples in form (float, float, str) to bytes
 def packCallings(unpackedCallings: [tuple]):
     packed = b""
     for calling in unpackedCallings:
@@ -59,8 +64,8 @@ def packCallings(unpackedCallings: [tuple]):
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
     sock.bind((HOST, PORT))
     sock.listen()                                   # listening on the specified host and port
-    print(f"listening on {HOST}:{PORT}")
+    print(f"Listening on {HOST}:{PORT}")
     while True:
-        conn = sock.accept()[0]
+        conn, addr = sock.accept()
         if conn is not None:
-            Thread(target=connectionHandler, args=(conn,)).start()     # runs every time a client establishes a connection
+            Thread(target=connectionHandler, args=(conn, addr,)).start()     # runs every time a client establishes a connection
